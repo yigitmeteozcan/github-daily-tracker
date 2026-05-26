@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Daily Tracker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-left">
+        <h1 class="title">🐙 GitHub Daily Tracker</h1>
+        <span class="username" id="username-display">@username</span>
+      </div>
+      <button class="refresh-btn" id="refresh-btn" title="Refresh">↻</button>
+    </header>
+
+    <div id="no-username" class="message-card hidden">
+      <p>👋 Set your GitHub username in settings to get started.</p>
+      <a href="#" class="settings-link-inline" id="settings-link-inline">Open Settings →</a>
+    </div>
+
+    <div id="main-content" class="hidden">
+      <section class="card">
+        <div class="section-label">Today's Commits</div>
+        <div class="progress-row">
+          <div class="progress-track">
+            <div class="progress-bar commits-bar" id="commits-bar"></div>
+          </div>
+          <span class="progress-text" id="commits-text">0 / 3</span>
+        </div>
+        <div class="streak-fire" id="streak-fire"></div>
+      </section>
+
+      <section class="card">
+        <div class="streak-row">
+          <span class="streak-main" id="streak-display">🔥 Streak: 0 days</span>
+          <span class="streak-best" id="best-streak">Best: 0 days</span>
+        </div>
+      </section>
+
+      <section class="card aura-card">
+        <div class="section-label gold-label">AURA</div>
+        <div class="progress-track">
+          <div class="progress-bar aura-bar" id="aura-bar"></div>
+        </div>
+        <div class="aura-points" id="aura-points">0 ✨</div>
+      </section>
+
+      <section class="card">
+        <div class="section-label">#CRACKED BAR</div>
+        <div class="progress-track">
+          <div class="progress-bar cracked-bar" id="cracked-bar"></div>
+        </div>
+        <div class="cracked-text" id="cracked-text">Day 0 / 30</div>
+        <div class="cracked-achievement hidden" id="cracked-achievement">🧠 CRACKED</div>
+      </section>
+
+      <section class="card rank-card">
+        <div class="rank-display" id="rank-display">🧳 Tourist</div>
+        <div class="rank-tagline" id="rank-tagline">just visiting</div>
+        <div class="rank-next" id="rank-next"></div>
+      </section>
+    </div>
+
+    <div id="error-card" class="message-card error-card hidden">
+      <p id="error-text">Something went wrong. Try refreshing.</p>
+    </div>
+
+    <footer class="footer">
+      <a href="#" class="settings-link" id="settings-link">⚙️ Settings</a>
+      <span class="last-updated" id="last-updated"></span>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
