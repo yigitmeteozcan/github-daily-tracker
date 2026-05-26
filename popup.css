@@ -1,0 +1,290 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+}
+
+.container {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e6edf3;
+  letter-spacing: -0.2px;
+}
+
+.username {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.refresh-btn {
+  background: none;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.refresh-btn:hover {
+  color: #e6edf3;
+  border-color: #8b949e;
+  background: #161b22;
+}
+
+.refresh-btn.spinning {
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Cards */
+.card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+/* Progress bars */
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #8b949e;
+  margin-bottom: 8px;
+}
+
+.gold-label {
+  color: #f0c040;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 8px;
+  background: #21262d;
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 100px;
+  width: 0%;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.commits-bar {
+  background: #f85149;
+}
+
+.commits-bar.target-hit {
+  background: #2ea043;
+}
+
+.aura-bar {
+  background: linear-gradient(90deg, #b8860b, #f0c040, #ffd700);
+}
+
+.cracked-bar {
+  background: linear-gradient(90deg, #7c3aed, #a855f7, #c084fc);
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #8b949e;
+  white-space: nowrap;
+  min-width: 50px;
+  text-align: right;
+}
+
+.streak-fire {
+  font-size: 11px;
+  color: #f0883e;
+  margin-top: 4px;
+  min-height: 14px;
+}
+
+/* Streak */
+.streak-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.streak-main {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.streak-best {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+/* Aura */
+.aura-card {
+  position: relative;
+}
+
+.aura-points {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f0c040;
+  margin-top: 6px;
+  letter-spacing: -0.5px;
+}
+
+/* Cracked bar */
+.cracked-text {
+  font-size: 11px;
+  color: #8b949e;
+  margin-top: 6px;
+}
+
+.cracked-achievement {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f0c040;
+  text-align: center;
+  margin-top: 6px;
+  animation: flash-gold 1s ease-in-out infinite alternate;
+}
+
+@keyframes flash-gold {
+  from { color: #f0c040; text-shadow: 0 0 8px #f0c04066; }
+  to   { color: #ffd700; text-shadow: 0 0 20px #ffd70099; }
+}
+
+/* Rank */
+.rank-card {
+  text-align: center;
+}
+
+.rank-display {
+  font-size: 22px;
+  font-weight: 700;
+  color: #e6edf3;
+  margin-bottom: 3px;
+}
+
+.rank-tagline {
+  font-size: 12px;
+  color: #8b949e;
+  font-style: italic;
+  margin-bottom: 6px;
+}
+
+.rank-next {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.rank-next span {
+  color: #58a6ff;
+}
+
+/* Messages */
+.message-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px 12px;
+  text-align: center;
+  color: #8b949e;
+  line-height: 1.5;
+}
+
+.error-card {
+  border-color: #f85149;
+}
+
+.error-card p {
+  color: #f85149;
+}
+
+.settings-link-inline {
+  display: inline-block;
+  margin-top: 8px;
+  color: #58a6ff;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.settings-link-inline:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 2px;
+}
+
+.settings-link {
+  font-size: 12px;
+  color: #8b949e;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.settings-link:hover {
+  color: #e6edf3;
+}
+
+.last-updated {
+  font-size: 10px;
+  color: #484f58;
+}
+
+/* Utility */
+.hidden {
+  display: none !important;
+}
