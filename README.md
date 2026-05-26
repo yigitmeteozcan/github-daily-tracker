@@ -1,4 +1,4 @@
-# 🐙 GitHub Daily Tracker
+# GitHub Daily Tracker
 
 > Track your daily GitHub commits. Build your aura. Go cracked.
 
