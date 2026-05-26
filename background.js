@@ -1,5 +1,5 @@
 import {
-  validateUsername, parseSvgCount, normalizeStorageData, computeGameState,
+  validateUsername, parseContributionCount, normalizeStorageData, computeGameState,
   todayLocalString, yesterdayLocalString,
   FETCH_TIMEOUT_MS, FETCH_INTERVAL_MINS, CRACKED_THRESHOLD, AURA_BREAK_PENALTY,
 } from './utils.js';
@@ -14,8 +14,6 @@ const dbg = (...args) => { if (DEBUG) console.error('[GDT]', ...args); };
 const getStorage  = () => chrome.storage.local.get(null);
 const setStorage  = (obj) => chrome.storage.local.set(obj);
 
-// Strategy 1 + 2: data-count attribute (local then UTC date fallback)
-// Strategy 3: aria-label "N contributions on Month D, YYYY"
 const fetchFromContributionsPage = async (username, localDate) => {
   const url = `https://github.com/users/${encodeURIComponent(username)}/contributions`;
   const controller = new AbortController();
@@ -25,26 +23,14 @@ const fetchFromContributionsPage = async (username, localDate) => {
     if (!res.ok) return null;
     const text = await res.text();
 
-    let count = parseSvgCount(text, localDate);
+    let count = parseContributionCount(text, localDate);
 
     if (count === null) {
       const utcDate = new Date().toISOString().slice(0, 10);
-      if (utcDate !== localDate) count = parseSvgCount(text, utcDate);
+      if (utcDate !== localDate) count = parseContributionCount(text, utcDate);
     }
 
-    if (count === null) {
-      const d = new Date(localDate + 'T12:00:00');
-      const months = ['January','February','March','April','May','June',
-                      'July','August','September','October','November','December'];
-      const label = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-      const m = text.match(new RegExp(`(\\d+)\\s+contribution(?:s)?\\s+on\\s+${label}`, 'i'));
-      if (m) {
-        const n = parseInt(m[1], 10);
-        if (Number.isFinite(n) && n >= 0 && n <= 10000) count = n;
-      }
-    }
-
-    return count; // null = page parsed but date not found; number = actual count
+    return count;
   } catch {
     return null;
   } finally {

@@ -64,6 +64,14 @@ export const yesterdayLocalString = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+const MONTH_NAMES = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+
+const ordinalSuffix = (n) => {
+  if (n >= 11 && n <= 13) return 'th';
+  return ['th','st','nd','rd'][n % 10] ?? 'th';
+};
+
 // Text-only SVG parsing — never creates DOM from external content
 export const parseSvgCount = (text, dateStr) => {
   if (!text || typeof text !== 'string') return null;
@@ -74,6 +82,40 @@ export const parseSvgCount = (text, dateStr) => {
   const count = parseInt(match[1], 10);
   if (!Number.isFinite(count) || count < 0 || count > MAX_TODAY_COMMITS) return 0;
   return count;
+};
+
+// Full contribution-count parser — handles all known GitHub tooltip formats:
+//   "3 contributions on May 24th"      (current format, no year)
+//   "3 contributions on May 24, 2024"  (older format, with year)
+//   "1 contribution on May 24th"
+//   "No contributions on May 24th"
+// Falls back to data-count attribute parsing first.
+export const parseContributionCount = (text, dateStr) => {
+  if (!text || typeof text !== 'string') return null;
+
+  // Try data-count attribute first
+  const fromAttr = parseSvgCount(text, dateStr);
+  if (fromAttr !== null) return fromAttr;
+
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return null;
+  const dayNum    = d.getDate();
+  const monthName = MONTH_NAMES[d.getMonth()];
+  const ordinal   = `${monthName} ${dayNum}${ordinalSuffix(dayNum)}`;   // "May 24th"
+  const withYear  = `${monthName} ${dayNum}, ${d.getFullYear()}`;       // "May 24, 2024"
+  const datePattern = `(?:${ordinal}|${withYear})`;
+
+  // "No contributions on May 24th" → 0
+  if (new RegExp(`No\\s+contributions\\s+on\\s+${datePattern}`, 'i').test(text)) return 0;
+
+  // "N contribution(s) on May 24th"
+  const m = text.match(new RegExp(`(\\d+)\\s+contribution(?:s)?\\s+on\\s+${datePattern}`, 'i'));
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (Number.isFinite(n) && n >= 0 && n <= MAX_TODAY_COMMITS) return n;
+  }
+
+  return null;
 };
 
 // Validate and clamp every value read from storage — defensive against tampering
