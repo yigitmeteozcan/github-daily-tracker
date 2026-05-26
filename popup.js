@@ -1,6 +1,6 @@
 import {
   getRank, getNextRank, normalizeStorageData, validateUsername,
-  CRACKED_THRESHOLD, AURA_BAR_MAX, STRINGS, todayLocalString,
+  CRACKED_THRESHOLD, AURA_BAR_MAX, STRINGS, todayLocalString, parseSvgCount,
 } from './utils.js';
 
 const STALE_MS = 30 * 60 * 1000;
@@ -153,11 +153,52 @@ const showSettings = async () => {
 
 // --- Fetch logic ---
 
-// Fetch today's commit count directly from the GitHub Events API.
-// More reliable than service worker HTML parsing — returns an integer or null.
-const fetchTodayCommits = async (username) => {
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+// Fetch via the contributions page WITH the user's GitHub session cookies.
+// Runs in the popup (a real browser page), so credentials work — private commits included.
+const fetchFromContributionsPage = async (username) => {
+  const localDate = todayLocalString();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
   try {
-    const today = todayLocalString();
+    const res = await fetch(
+      `https://github.com/users/${encodeURIComponent(username)}/contributions`,
+      { signal: controller.signal, cache: 'no-store', credentials: 'include' },
+    );
+    if (!res.ok) return null;
+    const text = await res.text();
+
+    let count = parseSvgCount(text, localDate);
+
+    if (count === null) {
+      const utcDate = new Date().toISOString().slice(0, 10);
+      if (utcDate !== localDate) count = parseSvgCount(text, utcDate);
+    }
+
+    if (count === null) {
+      const d = new Date(localDate + 'T12:00:00');
+      const label = `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+      const m = text.match(new RegExp(`(\\d+)\\s+contribution(?:s)?\\s+on\\s+${label}`, 'i'));
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (Number.isFinite(n) && n >= 0 && n <= 10000) count = n;
+      }
+    }
+
+    return count;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// Fallback: public Events API (no auth needed, but public repos only).
+const fetchFromEventsAPI = async (username) => {
+  const today = todayLocalString();
+  try {
     const res = await fetch(
       `https://api.github.com/users/${encodeURIComponent(username)}/events/public?per_page=100`,
       { cache: 'no-store', headers: { Accept: 'application/vnd.github.v3+json' } },
@@ -176,6 +217,13 @@ const fetchTodayCommits = async (username) => {
   } catch {
     return null;
   }
+};
+
+// Tries contributions page first (private + public), falls back to Events API (public only).
+const fetchTodayCommits = async (username) => {
+  const fromPage = await fetchFromContributionsPage(username);
+  if (fromPage !== null) return fromPage;
+  return fetchFromEventsAPI(username);
 };
 
 let fetching = false;
