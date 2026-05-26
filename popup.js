@@ -350,9 +350,16 @@ document.addEventListener('DOMContentLoaded', () => {
     await loadSettingsView();
   });
 
-  document.getElementById('test-notif-btn').addEventListener('click', async () => {
+  document.getElementById('test-notif-btn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
     try {
-      await chrome.runtime.sendMessage({ type: 'TEST_NOTIFICATION' });
-    } catch (_) {}
+      const resp = await chrome.runtime.sendMessage({ type: 'TEST_NOTIFICATION' });
+      btn.textContent = resp?.ok ? '✓ Sent!' : '✗ Failed (check OS notifications)';
+    } catch (_) {
+      btn.textContent = '✗ SW unavailable';
+    }
+    setTimeout(() => { btn.textContent = 'Test Notification'; btn.disabled = false; }, 3000);
   });
 });

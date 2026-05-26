@@ -108,14 +108,29 @@ const updateIcon = async (targetHit, commitCount) => {
   } catch (_) {}
 };
 
+const createNotification = (id, title, message) => new Promise((resolve) => {
+  chrome.notifications.create(id, {
+    type:    'basic',
+    iconUrl: chrome.runtime.getURL('icons/icon-red-48.png'),
+    title,
+    message,
+  }, (notifId) => {
+    if (chrome.runtime.lastError) {
+      dbg('Notification error:', chrome.runtime.lastError.message);
+      resolve(false);
+    } else {
+      resolve(notifId);
+    }
+  });
+});
+
 const fireStreakNotification = (todayCommits, dailyTarget) => {
   const remaining = dailyTarget - todayCommits;
-  chrome.notifications.create('streak-reminder', {
-    type:     'basic',
-    iconUrl:  'icons/icon-red-48.png',
-    title:    '⚠️ Streak at risk!',
-    message:  `You have ${todayCommits} commit${todayCommits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`,
-  });
+  createNotification(
+    'streak-reminder',
+    '⚠️ Streak at risk!',
+    `You have ${todayCommits} commit${todayCommits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`,
+  );
 };
 
 const doFetch = async () => {
@@ -260,15 +275,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         const raw  = await getStorage();
         const data = normalizeStorageData(raw);
         const remaining = Math.max(0, data.daily_target - data.today_commits);
-        chrome.notifications.create('test-notification', {
-          type:    'basic',
-          iconUrl: 'icons/icon-red-48.png',
-          title:   '⚠️ Streak at risk!',
-          message: remaining > 0
+        const result = await createNotification(
+          'test-notification',
+          '⚠️ Streak at risk!',
+          remaining > 0
             ? `You have ${data.today_commits} commit${data.today_commits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`
             : "You've already hit your target today! Keep it up. 🟢",
-        });
-        sendResponse({ ok: true });
+        );
+        sendResponse({ ok: !!result });
       } catch { sendResponse({ ok: false }); }
     })();
     return true;
