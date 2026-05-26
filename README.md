@@ -94,5 +94,6 @@ Tracks consecutive days you've hit your target. Fill it over **30 days** to perm
 ---
 
 ## License
+test habit tracker
 
 MIT
