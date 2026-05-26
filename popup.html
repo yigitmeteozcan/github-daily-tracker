@@ -69,7 +69,84 @@
       <p id="error-text">Something went wrong. Try refreshing.</p>
     </div>
 
-    <footer class="footer">
+    <!-- Inline Settings View -->
+    <div id="settings-view" class="settings-view hidden">
+      <div class="settings-header">
+        <button class="back-btn" id="back-to-main">← Back</button>
+        <span class="settings-title">⚙️ Settings</span>
+      </div>
+
+      <form id="settings-form" autocomplete="off">
+        <section class="card">
+          <label class="field-label" for="username-input">GitHub Username</label>
+          <input
+            type="text"
+            id="username-input"
+            class="text-input"
+            placeholder="e.g. torvalds"
+            maxlength="39"
+            spellcheck="false"
+          />
+          <p class="field-hint">Your public GitHub profile username (no @)</p>
+          <p class="field-error hidden" id="username-error"></p>
+        </section>
+
+        <section class="card">
+          <label class="field-label" for="target-slider">
+            Daily Commit Target: <span id="target-value" class="target-value">3</span>
+          </label>
+          <input
+            type="range"
+            id="target-slider"
+            class="slider"
+            min="1"
+            max="10"
+            value="3"
+            step="1"
+          />
+          <div class="slider-labels">
+            <span>1</span><span>5</span><span>10</span>
+          </div>
+        </section>
+
+        <section class="card">
+          <label class="field-label" for="notif-time">Reminder Time</label>
+          <input type="time" id="notif-time" class="time-input" value="21:00" />
+          <p class="field-hint">We'll remind you if you haven't hit your target</p>
+        </section>
+
+        <div class="button-row">
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+          <button type="button" class="btn btn-secondary" id="test-notif-btn">Test Notification</button>
+        </div>
+
+        <div class="save-status hidden" id="save-status">✓ Saved!</div>
+      </form>
+
+      <section class="card stats-card">
+        <div class="stats-title">Current Stats</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-streak">—</div>
+            <div class="stat-label">Streak</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value gold" id="stat-aura">—</div>
+            <div class="stat-label">Aura</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-rank">—</div>
+            <div class="stat-label">Rank</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-today">—</div>
+            <div class="stat-label">Today</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer" id="popup-footer">
       <a href="#" class="settings-link" id="settings-link">⚙️ Settings</a>
       <span class="last-updated" id="last-updated"></span>
     </footer>

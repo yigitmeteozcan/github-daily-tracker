@@ -19,10 +19,23 @@ const fetchContributions = async (username) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    const res = await fetch(url, {
+      signal: controller.signal,
+      cache: 'no-store',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
-    const count = parseSvgCount(text, todayLocalString());
+
+    const localDate = todayLocalString();
+    let count = parseSvgCount(text, localDate);
+
+    // GitHub may use UTC dates for unauthenticated requests — try UTC as fallback
+    if (count === null) {
+      const utcDate = new Date().toISOString().slice(0, 10);
+      if (utcDate !== localDate) count = parseSvgCount(text, utcDate);
+    }
+
     return count ?? 0;
   } finally {
     clearTimeout(timer);
@@ -161,9 +174,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_NOW') {
-    doFetch()
-      .then(() => sendResponse({ ok: true }))
-      .catch(() => sendResponse({ ok: false }));
+    (async () => {
+      // Re-establish alarms if the service worker restarted without onStartup firing
+      const fetchAlarm = await chrome.alarms.get(FETCH_ALARM);
+      if (!fetchAlarm) await setupAlarms();
+      await doFetch();
+      sendResponse({ ok: true });
+    })().catch(() => sendResponse({ ok: false }));
     return true;
   }
   if (msg.type === 'RESCHEDULE_NOTIFICATION') {
