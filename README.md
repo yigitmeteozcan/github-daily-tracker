@@ -1,7 +1,7 @@
 # GitHub Daily Tracker
 
 > Track your daily GitHub commits. Build your aura. Go cracked.
-test
+
 A Chrome extension that turns your commit habit into a game — streak tracking, aura points, rank progression, and a daily reminder to keep you shipping.
 
 ---
