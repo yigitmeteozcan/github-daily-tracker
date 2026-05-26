@@ -1,87 +1,108 @@
-'use strict';
+import { getRank, validateUsername, normalizeStorageData, STRINGS } from './utils.js';
 
-const RANKS = [
-  { min: 0,  max: 2,  emoji: '🧳', name: 'Tourist' },
-  { min: 3,  max: 6,  emoji: '☕', name: 'Bay Area Intern' },
-  { min: 7,  max: 13, emoji: '📚', name: 'CS Undergrad' },
-  { min: 14, max: 20, emoji: '🎓', name: 'Stanford Kid' },
-  { min: 21, max: 29, emoji: '⚡', name: 'YC Founder' },
-  { min: 30, max: Infinity, emoji: '🧠', name: 'CRACKED' },
-];
+const getEl = (id) => document.getElementById(id);
 
-function getRank(streak) {
-  return RANKS.find(r => streak >= r.min && streak <= r.max) || RANKS[0];
-}
-
-async function loadSettings() {
-  const data = await chrome.storage.local.get(null);
-
-  document.getElementById('username-input').value = data.username || '';
-  document.getElementById('target-slider').value = data.daily_target || 3;
-  document.getElementById('target-value').textContent = data.daily_target || 3;
-  document.getElementById('notif-time').value = data.notification_time || '21:00';
-
-  // Stats
-  const streak = data.streak || 0;
-  const aura = data.aura || 0;
-  const rank = getRank(streak);
-
-  document.getElementById('stat-streak').textContent = `${streak}🔥`;
-  document.getElementById('stat-aura').textContent = aura.toLocaleString();
-  document.getElementById('stat-rank').textContent = `${rank.emoji}`;
-  document.getElementById('stat-today').textContent = `${data.today_commits || 0}`;
-}
-
-function showSaved() {
-  const el = document.getElementById('save-status');
+const showSaved = (msg = '✓ Saved!') => {
+  const el = getEl('save-status');
+  el.textContent = msg;
   el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 2000);
-}
+  setTimeout(() => el.classList.add('hidden'), 3000);
+};
+
+const showUsernameError = (msg) => {
+  const el = getEl('username-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+};
+
+const clearUsernameError = () => {
+  getEl('username-error').classList.add('hidden');
+};
+
+const loadSettings = async () => {
+  const raw  = await chrome.storage.local.get(null);
+  const data = normalizeStorageData(raw);
+
+  getEl('username-input').value    = data.username;
+  getEl('target-slider').value     = data.daily_target;
+  getEl('target-value').textContent = data.daily_target;
+  getEl('notif-time').value        = data.notification_time;
+
+  const rank = getRank(data.streak);
+  getEl('stat-streak').textContent = `${data.streak}🔥`;
+  getEl('stat-aura').textContent   = data.aura.toLocaleString();
+  getEl('stat-rank').textContent   = rank.emoji;
+  getEl('stat-today').textContent  = String(data.today_commits);
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
 
-  // Live slider label
-  document.getElementById('target-slider').addEventListener('input', e => {
-    document.getElementById('target-value').textContent = e.target.value;
+  getEl('target-slider').addEventListener('input', (e) => {
+    getEl('target-value').textContent = e.target.value;
   });
 
-  // Save form
-  document.getElementById('settings-form').addEventListener('submit', async e => {
+  getEl('settings-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = document.getElementById('username-input').value.trim().replace(/^@/, '');
-    const daily_target = parseInt(document.getElementById('target-slider').value, 10);
-    const notification_time = document.getElementById('notif-time').value;
+    clearUsernameError();
 
-    await chrome.storage.local.set({ username, daily_target, notification_time });
+    const rawUsername    = getEl('username-input').value.trim().replace(/^@/, '');
+    const daily_target   = parseInt(getEl('target-slider').value, 10);
+    const notification_time = getEl('notif-time').value;
 
-    // Reschedule notification alarm with new time
+    if (!validateUsername(rawUsername)) {
+      showUsernameError(STRINGS.invalidUsername);
+      return;
+    }
+
+    const existing    = await chrome.storage.local.get('username');
+    const prevUsername = existing.username || '';
+    const usernameChanged = prevUsername !== '' && prevUsername !== rawUsername;
+
+    await chrome.storage.local.set({
+      username: rawUsername,
+      daily_target,
+      notification_time,
+    });
+
+    if (usernameChanged) {
+      // New user — full game state reset
+      await chrome.storage.local.set({
+        streak:           0,
+        longest_streak:   0,
+        aura:             0,
+        cracked_bar:      0,
+        cracked_achieved: false,
+        today_commits:    0,
+        last_active_date: '',
+        last_fetched:     '',
+        history:          {},
+      });
+    }
+
     try {
       await chrome.runtime.sendMessage({ type: 'RESCHEDULE_NOTIFICATION' });
     } catch (_) {}
 
-    showSaved();
+    showSaved(usernameChanged ? STRINGS.usernameChanged : '✓ Saved!');
     await loadSettings();
   });
 
-  // Test notification
-  document.getElementById('test-notif-btn').addEventListener('click', async () => {
-    const data = await chrome.storage.local.get(['today_commits', 'daily_target']);
-    const commits = data.today_commits || 0;
-    const target = data.daily_target || 3;
-    const remaining = Math.max(0, target - commits);
+  getEl('test-notif-btn').addEventListener('click', async () => {
+    const raw    = await chrome.storage.local.get(['today_commits', 'daily_target']);
+    const data   = normalizeStorageData(raw);
+    const remaining = Math.max(0, data.daily_target - data.today_commits);
     chrome.notifications.create('test-notification', {
-      type: 'basic',
+      type:    'basic',
       iconUrl: 'icons/icon-red-48.png',
-      title: '⚠️ Streak at risk!',
+      title:   '⚠️ Streak at risk!',
       message: remaining > 0
-        ? `You have ${commits} commit${commits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`
-        : `You've already hit your target today! Keep it up. 🟢`,
+        ? `You have ${data.today_commits} commit${data.today_commits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`
+        : "You've already hit your target today! Keep it up. 🟢",
     });
   });
 
-  // Back button
-  document.getElementById('back-btn').addEventListener('click', e => {
+  getEl('back-btn').addEventListener('click', (e) => {
     e.preventDefault();
     window.close();
   });

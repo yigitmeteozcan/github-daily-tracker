@@ -1,251 +1,148 @@
-'use strict';
+import {
+  validateUsername, parseSvgCount, normalizeStorageData, computeGameState,
+  todayLocalString, yesterdayLocalString,
+  FETCH_TIMEOUT_MS, FETCH_INTERVAL_MINS, CRACKED_THRESHOLD, AURA_BREAK_PENALTY,
+} from './utils.js';
 
-const FETCH_ALARM = 'fetch-contributions';
-const DAILY_RESET_ALARM = 'daily-reset';
+const FETCH_ALARM        = 'fetch-contributions';
+const DAILY_RESET_ALARM  = 'daily-reset';
 const NOTIFICATION_ALARM = 'daily-notification';
+const DEBUG = false;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+const dbg = (...args) => { if (DEBUG) console.error('[GDT]', ...args); };
 
-function todayString() {
-  return new Date().toISOString().slice(0, 10);
-}
+const getStorage  = () => chrome.storage.local.get(null);
+const setStorage  = (obj) => chrome.storage.local.set(obj);
 
-function yesterdayString() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
-async function getStorage() {
-  return chrome.storage.local.get(null);
-}
-
-async function setStorage(obj) {
-  return chrome.storage.local.set(obj);
-}
-
-// ── GitHub fetch ──────────────────────────────────────────────────────────────
-
-async function fetchContributions(username) {
-  const url = `https://github.com/users/${username}/contributions`;
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`GitHub returned ${res.status}`);
-  const text = await res.text();
-  const today = todayString();
-  // Parse SVG for today's rect
-  const regex = new RegExp(`data-date="${today}"[^>]*data-count="(\\d+)"`, 'i');
-  const altRegex = new RegExp(`data-count="(\\d+)"[^>]*data-date="${today}"`, 'i');
-  const match = text.match(regex) || text.match(altRegex);
-  if (!match) {
-    // Try DOM parsing as fallback
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'image/svg+xml');
-    const rect = doc.querySelector(`rect[data-date="${today}"]`);
-    if (rect) return parseInt(rect.getAttribute('data-count') || '0', 10);
-    return 0;
+const fetchContributions = async (username) => {
+  const url = `https://github.com/users/${encodeURIComponent(username)}/contributions`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const count = parseSvgCount(text, todayLocalString());
+    return count ?? 0;
+  } finally {
+    clearTimeout(timer);
   }
-  return parseInt(match[1], 10);
-}
+};
 
-// ── Game logic ────────────────────────────────────────────────────────────────
-
-function computeAura(commits, dailyTarget, streakExtended, streakBroke, currentAura) {
-  let aura = currentAura;
-  aura += commits * 10;
-  if (commits >= dailyTarget) aura += 50;
-  if (streakExtended) aura += 100;
-  if (streakBroke) aura -= 100;
-  return Math.max(0, aura);
-}
-
-async function updateGameState(todayCommits) {
-  const data = await getStorage();
-  const {
-    username = '',
-    daily_target = 3,
-    streak = 0,
-    longest_streak = 0,
-    aura = 0,
-    cracked_bar = 0,
-    last_active_date = '',
-    history = {},
-  } = data;
-
-  const today = todayString();
-  const yesterday = yesterdayString();
-
-  let newStreak = streak;
-  let newCrackedBar = cracked_bar;
-  let newAura = aura;
-  let streakExtended = false;
-  let streakBroke = false;
-
-  const prevHistory = { ...history, [today]: todayCommits };
-
-  // Detect streak break: last_active_date was not yesterday and not today
-  if (last_active_date && last_active_date !== today && last_active_date !== yesterday) {
-    // Missed at least one day
-    streakBroke = true;
-    newStreak = 0;
-    newCrackedBar = 0;
-  }
-
-  const targetHit = todayCommits >= daily_target;
-
-  if (targetHit && last_active_date !== today) {
-    // Extending streak today for the first time
-    newStreak = streakBroke ? 1 : newStreak + 1;
-    newCrackedBar = streakBroke ? 1 : Math.min(30, newCrackedBar + 1);
-    streakExtended = true;
-  }
-
-  // Recompute aura fresh from commits * 10 delta
-  // Only add bonuses when first recording a hit today
-  const prevTodayCommits = data.today_commits || 0;
-  const commitDelta = Math.max(0, todayCommits - prevTodayCommits);
-  newAura = aura + commitDelta * 10;
-  if (streakExtended) newAura += 50 + 100; // target bonus + streak bonus
-  if (streakBroke) newAura -= 100;
-  newAura = Math.max(0, newAura);
-
-  const newLongest = Math.max(longest_streak, newStreak);
-
-  const update = {
-    today_commits: todayCommits,
-    last_fetched: new Date().toISOString(),
-    streak: newStreak,
-    longest_streak: newLongest,
-    aura: newAura,
-    cracked_bar: newCrackedBar,
-    history: prevHistory,
-  };
-
-  if (targetHit) update.last_active_date = today;
-
+const updateGameState = async (todayCommits) => {
+  const raw  = await getStorage();
+  const data = normalizeStorageData(raw);
+  const update = computeGameState(data, todayCommits);
   await setStorage(update);
   return { ...data, ...update };
-}
+};
 
-// ── Icon & badge ──────────────────────────────────────────────────────────────
-
-async function updateIcon(targetHit, commitCount) {
+const updateIcon = async (targetHit, commitCount) => {
   const color = targetHit ? 'green' : 'red';
   try {
     await chrome.action.setIcon({
       path: {
-        16: `icons/icon-${color}-16.png`,
-        48: `icons/icon-${color}-48.png`,
+        16:  `icons/icon-${color}-16.png`,
+        48:  `icons/icon-${color}-48.png`,
         128: `icons/icon-${color}-128.png`,
       },
     });
   } catch (_) {}
-
   try {
-    const badge = commitCount > 0 ? String(commitCount) : '';
-    await chrome.action.setBadgeText({ text: badge });
-    await chrome.action.setBadgeBackgroundColor({
-      color: targetHit ? '#2ea043' : '#f85149',
-    });
+    await chrome.action.setBadgeText({ text: commitCount > 0 ? String(commitCount) : '' });
+    await chrome.action.setBadgeBackgroundColor({ color: targetHit ? '#2ea043' : '#f85149' });
   } catch (_) {}
-}
+};
 
-// ── Notifications ─────────────────────────────────────────────────────────────
-
-async function fireStreakNotification(todayCommits, dailyTarget) {
+const fireStreakNotification = (todayCommits, dailyTarget) => {
   const remaining = dailyTarget - todayCommits;
   chrome.notifications.create('streak-reminder', {
-    type: 'basic',
-    iconUrl: 'icons/icon-red-48.png',
-    title: '⚠️ Streak at risk!',
-    message: `You have ${todayCommits} commit${todayCommits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`,
+    type:     'basic',
+    iconUrl:  'icons/icon-red-48.png',
+    title:    '⚠️ Streak at risk!',
+    message:  `You have ${todayCommits} commit${todayCommits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`,
   });
-}
+};
 
-// ── Main fetch flow ───────────────────────────────────────────────────────────
-
-async function doFetch() {
+const doFetch = async () => {
   try {
-    const data = await getStorage();
-    const username = data.username;
-    if (!username) return;
-
-    const commits = await fetchContributions(username);
-    const updated = await updateGameState(commits);
-    const targetHit = commits >= (updated.daily_target || 3);
-    await updateIcon(targetHit, commits);
+    const raw      = await getStorage();
+    const { username, daily_target } = normalizeStorageData(raw);
+    if (!username || !validateUsername(username)) return;
+    const commits  = await fetchContributions(username);
+    const updated  = await updateGameState(commits);
+    await updateIcon(commits >= (updated.daily_target ?? daily_target), commits);
   } catch (err) {
-    console.error('[GDT] Fetch failed:', err);
+    dbg('Fetch failed:', err);
   }
-}
+};
 
-// ── Daily reset at midnight ───────────────────────────────────────────────────
-
-async function doDailyReset() {
+const doDailyReset = async () => {
   try {
-    const data = await getStorage();
-    const yesterday = yesterdayString();
+    const raw       = await getStorage();
+    const data      = normalizeStorageData(raw);
+    const yesterday = yesterdayLocalString();
 
-    if (data.last_active_date === yesterday) return; // already counted yesterday
+    // Already accounted for yesterday
+    if (data.last_active_date === yesterday) return;
 
-    const yesterdayCommits = (data.history || {})[yesterday] || 0;
-    const targetHit = yesterdayCommits >= (data.daily_target || 3);
+    const yesterdayCommits = data.history[yesterday] ?? 0;
+    const targetHit        = yesterdayCommits >= data.daily_target;
 
     if (!targetHit && data.streak > 0) {
-      const newAura = Math.max(0, (data.aura || 0) - 100);
       await setStorage({
-        streak: 0,
-        cracked_bar: 0,
-        aura: newAura,
+        streak:      0,
+        cracked_bar: data.cracked_achieved ? CRACKED_THRESHOLD : 0,
+        aura:        Math.max(0, data.aura - AURA_BREAK_PENALTY),
         today_commits: 0,
       });
     } else {
       await setStorage({ today_commits: 0 });
     }
   } catch (err) {
-    console.error('[GDT] Daily reset failed:', err);
+    dbg('Daily reset failed:', err);
   }
-}
+};
 
-// ── Alarm scheduling ─────────────────────────────────────────────────────────
-
-async function scheduleNotificationAlarm() {
+const scheduleNotificationAlarm = async () => {
   try {
-    const data = await getStorage();
-    const time = data.notification_time || '21:00';
-    const [hours, minutes] = time.split(':').map(Number);
+    const raw = await getStorage();
+    const { notification_time } = normalizeStorageData(raw);
+    const [hours, minutes] = notification_time.split(':').map(Number);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return;
 
-    const now = new Date();
+    const now    = new Date();
     const target = new Date();
     target.setHours(hours, minutes, 0, 0);
     if (target <= now) target.setDate(target.getDate() + 1);
 
-    const delayInMinutes = (target - now) / 60000;
+    await chrome.alarms.clear(NOTIFICATION_ALARM);
     await chrome.alarms.create(NOTIFICATION_ALARM, {
-      delayInMinutes,
+      delayInMinutes:  (target - now) / 60000,
       periodInMinutes: 24 * 60,
     });
   } catch (err) {
-    console.error('[GDT] Notification alarm scheduling failed:', err);
+    dbg('Notification scheduling failed:', err);
   }
-}
+};
 
-async function setupAlarms() {
-  // Fetch every 30 minutes
-  chrome.alarms.create(FETCH_ALARM, { periodInMinutes: 30, delayInMinutes: 0.5 });
-
-  // Daily reset at midnight
-  const now = new Date();
+const setupAlarms = async () => {
+  const now      = new Date();
   const midnight = new Date();
   midnight.setHours(24, 0, 1, 0);
-  const delayToMidnight = (midnight - now) / 60000;
-  chrome.alarms.create(DAILY_RESET_ALARM, { delayInMinutes: delayToMidnight, periodInMinutes: 24 * 60 });
 
+  chrome.alarms.create(FETCH_ALARM, {
+    periodInMinutes: FETCH_INTERVAL_MINS,
+    delayInMinutes:  0.5,
+  });
+  chrome.alarms.create(DAILY_RESET_ALARM, {
+    delayInMinutes:  (midnight - now) / 60000,
+    periodInMinutes: 24 * 60,
+  });
   await scheduleNotificationAlarm();
-}
+};
 
-// ── Event listeners ───────────────────────────────────────────────────────────
-
-chrome.alarms.onAlarm.addListener(async alarm => {
+chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === FETCH_ALARM) {
     await doFetch();
   } else if (alarm.name === DAILY_RESET_ALARM) {
@@ -253,24 +150,27 @@ chrome.alarms.onAlarm.addListener(async alarm => {
     await doFetch();
   } else if (alarm.name === NOTIFICATION_ALARM) {
     try {
-      const data = await getStorage();
-      if ((data.today_commits || 0) < (data.daily_target || 3)) {
-        await fireStreakNotification(data.today_commits || 0, data.daily_target || 3);
+      const raw  = await getStorage();
+      const data = normalizeStorageData(raw);
+      if (data.today_commits < data.daily_target) {
+        fireStreakNotification(data.today_commits, data.daily_target);
       }
       await scheduleNotificationAlarm();
-    } catch (err) {
-      console.error('[GDT] Notification alarm handler failed:', err);
-    }
+    } catch (_) {}
   }
 });
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'FETCH_NOW') {
-    doFetch().then(() => sendResponse({ ok: true })).catch(() => sendResponse({ ok: false }));
+    doFetch()
+      .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
     return true;
   }
   if (msg.type === 'RESCHEDULE_NOTIFICATION') {
-    scheduleNotificationAlarm().then(() => sendResponse({ ok: true }));
+    scheduleNotificationAlarm()
+      .then(() => sendResponse({ ok: true }))
+      .catch(() => sendResponse({ ok: false }));
     return true;
   }
 });
