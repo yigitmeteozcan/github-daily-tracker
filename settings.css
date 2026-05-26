@@ -7,8 +7,8 @@
 body {
   width: 360px;
   min-height: 100vh;
-  background: #0d1117;
-  color: #e6edf3;
+  background: #0c0c0c;
+  color: #f0f0f0;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 13px;
 }
@@ -21,35 +21,18 @@ body {
   max-width: 360px;
 }
 
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 2px;
-}
+/* ── Header ─────────────────────────────── */
+.header { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
 
-.back-btn {
-  font-size: 12px;
-  color: #8b949e;
-  text-decoration: none;
-  transition: color 0.15s;
-}
+.back-btn { font-size: 12px; color: #555; text-decoration: none; transition: color 0.15s; }
+.back-btn:hover { color: #f0f0f0; }
 
-.back-btn:hover {
-  color: #e6edf3;
-}
+.title { font-size: 15px; font-weight: 700; color: #f0f0f0; }
 
-.title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #e6edf3;
-}
-
-/* Cards */
+/* ── Cards ───────────────────────────────── */
 .card {
-  background: #161b22;
-  border: 1px solid #30363d;
+  background: #141414;
+  border: 1px solid #1e1e1e;
   border-radius: 8px;
   padding: 12px 14px;
   display: flex;
@@ -57,35 +40,25 @@ body {
   gap: 6px;
 }
 
-/* Fields */
+/* ── Fields ──────────────────────────────── */
 .field-label {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #8b949e;
+  letter-spacing: 0.8px;
+  color: #444;
   display: block;
 }
 
-.field-hint {
-  font-size: 11px;
-  color: #484f58;
-  margin-top: 2px;
-}
-
-.field-error {
-  font-size: 11px;
-  color: #f85149;
-  margin-top: 4px;
-  line-height: 1.4;
-}
+.field-hint { font-size: 11px; color: #333; margin-top: 2px; }
+.field-error { font-size: 11px; color: #f87171; margin-top: 4px; line-height: 1.4; }
 
 .text-input {
   width: 100%;
-  background: #0d1117;
-  border: 1px solid #30363d;
+  background: #0c0c0c;
+  border: 1px solid #1e1e1e;
   border-radius: 6px;
-  color: #e6edf3;
+  color: #f0f0f0;
   font-size: 13px;
   padding: 7px 10px;
   outline: none;
@@ -93,59 +66,44 @@ body {
   font-family: inherit;
 }
 
-.text-input:focus {
-  border-color: #58a6ff;
-}
+.text-input:focus { border-color: #555; }
+.text-input::placeholder { color: #333; }
 
-.text-input::placeholder {
-  color: #484f58;
-}
-
-/* Slider */
-.target-value {
-  color: #f0c040;
-  font-weight: 700;
-  font-size: 14px;
-}
+/* ── Slider ──────────────────────────────── */
+.target-value { color: #f0f0f0; font-weight: 700; font-size: 14px; }
 
 .slider {
   -webkit-appearance: none;
   width: 100%;
-  height: 6px;
+  height: 5px;
   border-radius: 100px;
-  background: #21262d;
+  background: #1e1e1e;
   outline: none;
   cursor: pointer;
   margin: 4px 0 2px;
+  accent-color: #22c55e;
 }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: #f0c040;
+  background: #f0f0f0;
   cursor: pointer;
   transition: transform 0.1s;
 }
 
-.slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
+.slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
 
-.slider-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: #484f58;
-}
+.slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: #333; }
 
-/* Time input */
+/* ── Time input ──────────────────────────── */
 .time-input {
-  background: #0d1117;
-  border: 1px solid #30363d;
+  background: #0c0c0c;
+  border: 1px solid #1e1e1e;
   border-radius: 6px;
-  color: #e6edf3;
+  color: #f0f0f0;
   font-size: 13px;
   padding: 7px 10px;
   outline: none;
@@ -155,15 +113,10 @@ body {
   color-scheme: dark;
 }
 
-.time-input:focus {
-  border-color: #58a6ff;
-}
+.time-input:focus { border-color: #555; }
 
-/* Buttons */
-.button-row {
-  display: flex;
-  gap: 8px;
-}
+/* ── Buttons ─────────────────────────────── */
+.button-row { display: flex; gap: 8px; }
 
 .btn {
   flex: 1;
@@ -173,82 +126,34 @@ body {
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.15s;
+  transition: opacity 0.15s;
   font-family: inherit;
 }
 
-.btn-primary {
-  background: #238636;
-  border-color: #2ea043;
-  color: #fff;
-}
+.btn:hover { opacity: 0.8; }
 
-.btn-primary:hover {
-  background: #2ea043;
-}
+.btn-primary  { background: #22c55e; color: #0c0c0c; border-color: #22c55e; }
+.btn-secondary { background: #141414; border-color: #1e1e1e; color: #888; }
 
-.btn-secondary {
-  background: #161b22;
-  border-color: #30363d;
-  color: #e6edf3;
-}
+.save-status { font-size: 12px; color: #22c55e; text-align: center; font-weight: 600; padding: 4px 0; }
 
-.btn-secondary:hover {
-  background: #21262d;
-  border-color: #8b949e;
-}
-
-/* Save status */
-.save-status {
-  font-size: 12px;
-  color: #2ea043;
-  text-align: center;
-  font-weight: 600;
-  padding: 4px 0;
-}
-
-/* Stats */
-.stats-card {
-  margin-top: 4px;
-}
+/* ── Stats ───────────────────────────────── */
+.stats-card { margin-top: 4px; }
 
 .stats-title {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #8b949e;
+  letter-spacing: 0.8px;
+  color: #444;
   margin-bottom: 10px;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 8px;
-}
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+.stat-item { text-align: center; }
+.stat-value { font-size: 16px; font-weight: 700; color: #f0f0f0; line-height: 1.2; }
+.stat-value.gold { color: #f0f0f0; }
+.stat-label { font-size: 10px; color: #3a3a3a; margin-top: 2px; }
 
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: #e6edf3;
-  line-height: 1.2;
-}
-
-.stat-value.gold {
-  color: #58a6ff;
-}
-
-.stat-label {
-  font-size: 10px;
-  color: #8b949e;
-  margin-top: 2px;
-}
-
-/* Utility */
-.hidden {
-  display: none !important;
-}
+/* ── Utility ─────────────────────────────── */
+.hidden { display: none !important; }

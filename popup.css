@@ -6,8 +6,8 @@
 
 body {
   width: 320px;
-  background: #0d1117;
-  color: #e6edf3;
+  background: #0c0c0c;
+  color: #f0f0f0;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 13px;
 }
@@ -36,19 +36,18 @@ body {
 .title {
   font-size: 13px;
   font-weight: 700;
-  color: #e6edf3;
-  letter-spacing: -0.1px;
+  color: #f0f0f0;
 }
 
 .username {
   font-size: 11px;
-  color: #636e7b;
+  color: #555;
 }
 
 .refresh-btn {
   background: none;
-  border: 1px solid #21262d;
-  color: #636e7b;
+  border: 1px solid #222;
+  color: #555;
   border-radius: 6px;
   width: 26px;
   height: 26px;
@@ -57,14 +56,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   flex-shrink: 0;
 }
 
 .refresh-btn:hover {
-  color: #e6edf3;
-  border-color: #444c56;
-  background: #13181f;
+  color: #f0f0f0;
+  border-color: #444;
 }
 
 .refresh-btn.spinning {
@@ -77,8 +75,8 @@ body {
 
 /* ── Cards ───────────────────────────────── */
 .card {
-  background: #13181f;
-  border: 1px solid #21262d;
+  background: #141414;
+  border: 1px solid #1e1e1e;
   border-radius: 8px;
   padding: 10px 12px;
 }
@@ -91,16 +89,12 @@ body {
 
 /* ── Progress bars ───────────────────────── */
 .section-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.7px;
-  color: #636e7b;
+  letter-spacing: 0.8px;
+  color: #444;
   margin-bottom: 8px;
-}
-
-.blue-label {
-  color: #58a6ff;
 }
 
 .progress-row {
@@ -111,8 +105,8 @@ body {
 
 .progress-track {
   flex: 1;
-  height: 6px;
-  background: #1c2128;
+  height: 5px;
+  background: #1e1e1e;
   border-radius: 100px;
   overflow: hidden;
 }
@@ -121,29 +115,18 @@ body {
   height: 100%;
   border-radius: 100px;
   width: 0%;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Blue while working toward target, green when hit */
-.commits-bar {
-  background: #58a6ff;
-}
-
-.commits-bar.target-hit {
-  background: #3fb950;
-}
-
-.aura-bar {
-  background: #58a6ff;
-}
-
-.cracked-bar {
-  background: #3fb950;
-}
+/* Gray while working, green when done */
+.commits-bar       { background: #444; }
+.commits-bar.target-hit { background: #22c55e; }
+.aura-bar          { background: #333; }
+.cracked-bar       { background: #22c55e; }
 
 .progress-text {
   font-size: 11px;
-  color: #636e7b;
+  color: #555;
   white-space: nowrap;
   min-width: 50px;
   text-align: right;
@@ -151,7 +134,7 @@ body {
 
 .streak-fire {
   font-size: 11px;
-  color: #3fb950;
+  color: #22c55e;
   margin-top: 4px;
   min-height: 14px;
 }
@@ -166,19 +149,19 @@ body {
 .streak-main {
   font-size: 14px;
   font-weight: 600;
-  color: #e6edf3;
+  color: #f0f0f0;
 }
 
 .streak-best {
   font-size: 11px;
-  color: #636e7b;
+  color: #555;
 }
 
 /* ── Aura ────────────────────────────────── */
 .aura-points {
   font-size: 18px;
   font-weight: 700;
-  color: #58a6ff;
+  color: #f0f0f0;
   margin-top: 6px;
   letter-spacing: -0.5px;
 }
@@ -186,89 +169,70 @@ body {
 /* ── Cracked bar ─────────────────────────── */
 .cracked-text {
   font-size: 11px;
-  color: #636e7b;
+  color: #555;
   margin-top: 6px;
 }
 
 .cracked-achievement {
   font-size: 18px;
-  font-weight: 800;
-  color: #3fb950;
+  font-weight: 700;
+  color: #22c55e;
   text-align: center;
   margin-top: 6px;
-  animation: pulse-green 1.2s ease-in-out infinite alternate;
+  animation: flicker 1.6s ease-in-out infinite alternate;
 }
 
-@keyframes pulse-green {
-  from { color: #3fb950; text-shadow: 0 0 6px #3fb95055; }
-  to   { color: #56d364; text-shadow: 0 0 18px #3fb95088; }
+@keyframes flicker {
+  from { opacity: 0.75; }
+  to   { opacity: 1; }
 }
 
 /* ── Rank ────────────────────────────────── */
-.rank-card {
-  text-align: center;
-}
+.rank-card { text-align: center; }
 
 .rank-display {
   font-size: 20px;
   font-weight: 700;
-  color: #e6edf3;
+  color: #f0f0f0;
   margin-bottom: 3px;
 }
 
 .rank-tagline {
   font-size: 11px;
-  color: #636e7b;
+  color: #555;
   font-style: italic;
   margin-bottom: 6px;
 }
 
-.rank-next {
-  font-size: 11px;
-  color: #636e7b;
-}
-
-.rank-next span {
-  color: #58a6ff;
-}
+.rank-next { font-size: 11px; color: #555; }
+.rank-next span { color: #f0f0f0; }
 
 /* ── Messages ────────────────────────────── */
 .message-card {
-  background: #13181f;
-  border: 1px solid #21262d;
+  background: #141414;
+  border: 1px solid #1e1e1e;
   border-radius: 8px;
   padding: 16px 12px;
   text-align: center;
-  color: #8b949e;
+  color: #666;
   line-height: 1.5;
 }
 
-.error-card {
-  border-color: #da3633;
-}
+.error-card { border-color: #2a1515; }
+.error-card p { color: #f87171; }
 
-.error-card p {
-  color: #f85149;
-}
-
-.setup-hint {
-  font-size: 11px;
-  color: #484f58;
-  margin-top: 6px;
-}
+.setup-hint { font-size: 11px; color: #3a3a3a; margin-top: 6px; }
 
 .settings-link-inline {
   display: inline-block;
   margin-top: 10px;
-  color: #58a6ff;
+  color: #f0f0f0;
   text-decoration: none;
   font-size: 12px;
   font-weight: 600;
 }
 
-.settings-link-inline:hover {
-  text-decoration: underline;
-}
+.settings-link-inline:hover { opacity: 0.65; }
 
 /* ── Footer ──────────────────────────────── */
 .footer {
@@ -280,19 +244,14 @@ body {
 
 .settings-link {
   font-size: 12px;
-  color: #636e7b;
+  color: #555;
   text-decoration: none;
   transition: color 0.15s;
 }
 
-.settings-link:hover {
-  color: #e6edf3;
-}
+.settings-link:hover { color: #f0f0f0; }
 
-.last-updated {
-  font-size: 10px;
-  color: #444c56;
-}
+.last-updated { font-size: 10px; color: #333; }
 
 /* ── Settings View ───────────────────────── */
 .settings-view {
@@ -308,45 +267,37 @@ body {
   padding-bottom: 2px;
 }
 
-.settings-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #e6edf3;
-}
+.settings-title { font-size: 13px; font-weight: 600; color: #f0f0f0; }
 
 .back-btn {
   background: none;
-  border: 1px solid #21262d;
-  color: #636e7b;
+  border: 1px solid #222;
+  color: #555;
   border-radius: 6px;
   padding: 3px 8px;
   cursor: pointer;
   font-size: 11px;
   font-family: inherit;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   flex-shrink: 0;
 }
 
-.back-btn:hover {
-  color: #e6edf3;
-  border-color: #444c56;
-  background: #13181f;
-}
+.back-btn:hover { color: #f0f0f0; border-color: #444; }
 
 .field-label {
   display: block;
   font-size: 11px;
   font-weight: 600;
-  color: #e6edf3;
+  color: #f0f0f0;
   margin-bottom: 6px;
 }
 
 .text-input,
 .time-input {
   width: 100%;
-  background: #0d1117;
-  border: 1px solid #21262d;
-  color: #e6edf3;
+  background: #0c0c0c;
+  border: 1px solid #1e1e1e;
+  color: #f0f0f0;
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 12px;
@@ -357,25 +308,14 @@ body {
 }
 
 .text-input:focus,
-.time-input:focus {
-  border-color: #58a6ff;
-}
+.time-input:focus { border-color: #555; }
 
-.field-hint {
-  font-size: 10px;
-  color: #444c56;
-  margin-top: 4px;
-}
-
-.field-error {
-  font-size: 11px;
-  color: #f85149;
-  margin-top: 4px;
-}
+.field-hint { font-size: 10px; color: #333; margin-top: 4px; }
+.field-error { font-size: 11px; color: #f87171; margin-top: 4px; }
 
 .slider {
   width: 100%;
-  accent-color: #58a6ff;
+  accent-color: #22c55e;
   cursor: pointer;
   margin: 4px 0 2px;
 }
@@ -384,18 +324,12 @@ body {
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  color: #444c56;
+  color: #333;
 }
 
-.target-value {
-  color: #58a6ff;
-  font-weight: 700;
-}
+.target-value { color: #f0f0f0; font-weight: 700; }
 
-.button-row {
-  display: flex;
-  gap: 8px;
-}
+.button-row { display: flex; gap: 8px; }
 
 .btn {
   flex: 1;
@@ -409,34 +343,19 @@ body {
   transition: opacity 0.15s;
 }
 
-.btn:hover {
-  opacity: 0.82;
-}
+.btn:hover { opacity: 0.8; }
 
-.btn-primary {
-  background: #238636;
-  color: #fff;
-}
+.btn-primary  { background: #22c55e; color: #0c0c0c; }
+.btn-secondary { background: #1a1a1a; border: 1px solid #222; color: #888; }
 
-.btn-secondary {
-  background: #1c2128;
-  border: 1px solid #21262d;
-  color: #8b949e;
-}
-
-.save-status {
-  font-size: 11px;
-  color: #3fb950;
-  text-align: center;
-  padding: 2px 0;
-}
+.save-status { font-size: 11px; color: #22c55e; text-align: center; padding: 2px 0; }
 
 .stats-card .stats-title {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.7px;
-  color: #636e7b;
+  letter-spacing: 0.8px;
+  color: #444;
   margin-bottom: 8px;
 }
 
@@ -447,23 +366,8 @@ body {
   text-align: center;
 }
 
-.stat-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: #e6edf3;
-}
-
-.stat-value.blue {
-  color: #58a6ff;
-}
-
-.stat-label {
-  font-size: 9px;
-  color: #444c56;
-  margin-top: 2px;
-}
+.stat-value { font-size: 15px; font-weight: 700; color: #f0f0f0; }
+.stat-label { font-size: 9px; color: #3a3a3a; margin-top: 2px; }
 
 /* ── Utility ─────────────────────────────── */
-.hidden {
-  display: none !important;
-}
+.hidden { display: none !important; }

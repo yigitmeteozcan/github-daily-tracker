@@ -4,7 +4,10 @@
   "version": "1.0.0",
   "description": "Track your daily GitHub commits. Build your aura. Go cracked.",
   "permissions": ["storage", "alarms", "notifications"],
-  "host_permissions": ["https://github.com/users/*/contributions"],
+  "host_permissions": [
+    "https://github.com/users/*/contributions",
+    "https://api.github.com/users/*/events/public"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },

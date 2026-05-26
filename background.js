@@ -14,51 +14,87 @@ const dbg = (...args) => { if (DEBUG) console.error('[GDT]', ...args); };
 const getStorage  = () => chrome.storage.local.get(null);
 const setStorage  = (obj) => chrome.storage.local.set(obj);
 
-const fetchContributions = async (username) => {
+// Strategy 1 + 2: data-count attribute (local then UTC date fallback)
+// Strategy 3: aria-label "N contributions on Month D, YYYY"
+const fetchFromContributionsPage = async (username, localDate) => {
   const url = `https://github.com/users/${encodeURIComponent(username)}/contributions`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    if (!res.ok) return null;
+    const text = await res.text();
+
+    let count = parseSvgCount(text, localDate);
+
+    if (count === null) {
+      const utcDate = new Date().toISOString().slice(0, 10);
+      if (utcDate !== localDate) count = parseSvgCount(text, utcDate);
+    }
+
+    if (count === null) {
+      const d = new Date(localDate + 'T12:00:00');
+      const months = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+      const label = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+      const m = text.match(new RegExp(`(\\d+)\\s+contribution(?:s)?\\s+on\\s+${label}`, 'i'));
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (Number.isFinite(n) && n >= 0 && n <= 10000) count = n;
+      }
+    }
+
+    return count; // null = page parsed but date not found; number = actual count
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// Strategy 4: GitHub public Events API — JSON, no HTML parsing required.
+// Counts PushEvent commits for today in the user's local timezone.
+const fetchFromEventsAPI = async (username, localDate) => {
+  const url = `https://api.github.com/users/${encodeURIComponent(username)}/events/public?per_page=100`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       signal: controller.signal,
       cache: 'no-store',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
+    if (!res.ok) return null;
+    const events = await res.json();
+    if (!Array.isArray(events)) return null;
 
-    const localDate = todayLocalString();
-
-    // Strategy 1: data-count attribute, local date
-    let count = parseSvgCount(text, localDate);
-
-    // Strategy 2: data-count attribute, UTC date (GitHub may differ on unauthenticated reqs)
-    if (count === null) {
-      const utcDate = new Date().toISOString().slice(0, 10);
-      if (utcDate !== localDate) count = parseSvgCount(text, utcDate);
+    let count = 0;
+    for (const ev of events) {
+      if (ev.type !== 'PushEvent' || !ev.created_at) continue;
+      const d = new Date(ev.created_at);
+      const evDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (evDate === localDate) {
+        // payload.size is the total commit count even when payload.commits is truncated
+        count += ev.payload?.size ?? ev.payload?.commits?.length ?? 0;
+      }
     }
-
-    // Strategy 3: aria-label text — "2 contributions on May 26, 2026"
-    // Robust against GitHub HTML structure changes
-    if (count === null) count = parseAriaLabel(text, localDate);
-
-    return count ?? 0;
+    return count;
+  } catch {
+    return null;
   } finally {
     clearTimeout(timer);
   }
 };
 
-// Parses "N contribution(s) on Month D, YYYY" from GitHub aria-labels
-const parseAriaLabel = (text, dateStr) => {
-  const d = new Date(dateStr + 'T12:00:00');
-  const months = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-  const label = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-  const re = new RegExp(`(\\d+)\\s+contribution(?:s)?\\s+on\\s+${label}`, 'i');
-  const match = text.match(re);
-  if (!match) return null;
-  const n = parseInt(match[1], 10);
-  return Number.isFinite(n) && n >= 0 && n <= 10000 ? n : null;
+const fetchContributions = async (username) => {
+  const localDate = todayLocalString();
+
+  const fromPage = await fetchFromContributionsPage(username, localDate);
+  if (fromPage !== null) return fromPage;
+
+  // Contributions page parsing failed entirely — fall back to Events API
+  const fromEvents = await fetchFromEventsAPI(username, localDate);
+  return fromEvents; // null if both failed; caller preserves last known count
 };
 
 const updateGameState = async (todayCommits) => {
@@ -102,6 +138,12 @@ const doFetch = async () => {
     const { username, daily_target } = normalizeStorageData(raw);
     if (!username || !validateUsername(username)) return;
     const commits  = await fetchContributions(username);
+    if (commits === null) {
+      // All fetch strategies failed — update timestamp so popup shows "just now"
+      // but keep the last known commit count rather than resetting to 0
+      await setStorage({ last_fetched: new Date().toISOString() });
+      return;
+    }
     const updated  = await updateGameState(commits);
     await updateIcon(commits >= (updated.daily_target ?? daily_target), commits);
   } catch (err) {

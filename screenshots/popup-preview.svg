@@ -1,61 +1,55 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 548" width="360" height="548">
 
   <!-- Drop shadow -->
-  <rect x="6" y="8" width="348" height="534" rx="13" fill="#000" opacity="0.45"/>
+  <rect x="6" y="8" width="348" height="534" rx="13" fill="#000" opacity="0.5"/>
 
   <!-- Popup background -->
-  <rect x="0" y="0" width="348" height="534" rx="12" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <rect x="0" y="0" width="348" height="534" rx="12" fill="#0c0c0c" stroke="#1e1e1e" stroke-width="1"/>
 
   <!-- ── HEADER ───────────────────────────────────────────────── -->
-  <text x="22" y="36" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="700" fill="#e6edf3">🐙 GitHub Daily Tracker</text>
-  <text x="22" y="52" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#636e7b">@yigitmeteozcan</text>
-  <rect x="308" y="20" width="28" height="28" rx="6" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="322" y="39" font-family="system-ui,-apple-system,sans-serif" font-size="15" fill="#636e7b" text-anchor="middle">↻</text>
+  <text x="22" y="36" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="700" fill="#f0f0f0">🐙 GitHub Daily Tracker</text>
+  <text x="22" y="52" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#555">@yigitmeteozcan</text>
+  <rect x="308" y="20" width="28" height="28" rx="6" fill="none" stroke="#222" stroke-width="1"/>
+  <text x="322" y="39" font-family="system-ui,-apple-system,sans-serif" font-size="15" fill="#555" text-anchor="middle">↻</text>
 
   <!-- ── TODAY'S COMMITS ────────────────────────────────────────── -->
-  <rect x="10" y="66" width="328" height="78" rx="8" fill="#13181f" stroke="#21262d" stroke-width="1"/>
-  <text x="22" y="82" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#636e7b" letter-spacing="0.7">TODAY'S COMMITS</text>
-  <!-- track -->
-  <rect x="22" y="90" width="220" height="6" rx="3" fill="#1c2128"/>
-  <!-- fill: 3/5 = 60% → 132 px — blue (in progress) -->
-  <rect x="22" y="90" width="132" height="6" rx="3" fill="#58a6ff"/>
-  <text x="250" y="96" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#636e7b">3 / 5</text>
-  <!-- streak fire: green -->
-  <text x="22" y="118" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#3fb950">🔥 12 day streak!</text>
+  <rect x="10" y="66" width="328" height="76" rx="8" fill="#141414" stroke="#1e1e1e" stroke-width="1"/>
+  <text x="22" y="80" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#444" letter-spacing="0.8">TODAY'S COMMITS</text>
+  <rect x="22" y="87" width="220" height="5" rx="2.5" fill="#1e1e1e"/>
+  <!-- 3/5 = 60% = 132px — gray (in progress) -->
+  <rect x="22" y="87" width="132" height="5" rx="2.5" fill="#444"/>
+  <text x="250" y="92" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#555">3 / 5</text>
+  <text x="22" y="116" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#22c55e">🔥 12 day streak!</text>
 
   <!-- ── STREAK ──────────────────────────────────────────────────── -->
-  <rect x="10" y="152" width="328" height="44" rx="8" fill="#13181f" stroke="#21262d" stroke-width="1"/>
-  <text x="22" y="179" font-family="system-ui,-apple-system,sans-serif" font-size="14" font-weight="600" fill="#e6edf3">🔥 Streak: 12 days</text>
-  <text x="272" y="179" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#636e7b">Best: 15 days</text>
+  <rect x="10" y="150" width="328" height="42" rx="8" fill="#141414" stroke="#1e1e1e" stroke-width="1"/>
+  <text x="22" y="175" font-family="system-ui,-apple-system,sans-serif" font-size="14" font-weight="600" fill="#f0f0f0">🔥 Streak: 12 days</text>
+  <text x="272" y="175" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#555">Best: 15 days</text>
 
   <!-- ── AURA ───────────────────────────────────────────────────── -->
-  <rect x="10" y="204" width="328" height="78" rx="8" fill="#13181f" stroke="#21262d" stroke-width="1"/>
-  <!-- AURA label: blue -->
-  <text x="22" y="220" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#58a6ff" letter-spacing="0.7">AURA</text>
-  <!-- track -->
-  <rect x="22" y="227" width="220" height="6" rx="3" fill="#1c2128"/>
-  <!-- fill: 1240/5000 = 24.8% → 55 px — blue solid -->
-  <rect x="22" y="227" width="55" height="6" rx="3" fill="#58a6ff"/>
-  <!-- aura points: blue -->
-  <text x="22" y="264" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="700" fill="#58a6ff">1,240 ✨</text>
+  <rect x="10" y="200" width="328" height="76" rx="8" fill="#141414" stroke="#1e1e1e" stroke-width="1"/>
+  <text x="22" y="214" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#444" letter-spacing="0.8">AURA</text>
+  <rect x="22" y="221" width="220" height="5" rx="2.5" fill="#1e1e1e"/>
+  <rect x="22" y="221" width="55" height="5" rx="2.5" fill="#333"/>
+  <!-- aura points: white -->
+  <text x="22" y="258" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="700" fill="#f0f0f0">1,240 ✨</text>
 
   <!-- ── CRACKED BAR ─────────────────────────────────────────────── -->
-  <rect x="10" y="290" width="328" height="78" rx="8" fill="#13181f" stroke="#21262d" stroke-width="1"/>
-  <text x="22" y="306" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#636e7b" letter-spacing="0.7">#CRACKED BAR</text>
-  <!-- track -->
-  <rect x="22" y="313" width="220" height="6" rx="3" fill="#1c2128"/>
-  <!-- fill: 18/30 = 60% → 132 px — green -->
-  <rect x="22" y="313" width="132" height="6" rx="3" fill="#3fb950"/>
-  <text x="22" y="350" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#636e7b">Day 18 / 30</text>
+  <rect x="10" y="284" width="328" height="76" rx="8" fill="#141414" stroke="#1e1e1e" stroke-width="1"/>
+  <text x="22" y="298" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="600" fill="#444" letter-spacing="0.8">#CRACKED BAR</text>
+  <rect x="22" y="305" width="220" height="5" rx="2.5" fill="#1e1e1e"/>
+  <!-- 18/30 = 60% = 132px — green -->
+  <rect x="22" y="305" width="132" height="5" rx="2.5" fill="#22c55e"/>
+  <text x="22" y="342" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#555">Day 18 / 30</text>
 
   <!-- ── RANK ───────────────────────────────────────────────────── -->
-  <rect x="10" y="376" width="328" height="106" rx="8" fill="#13181f" stroke="#21262d" stroke-width="1"/>
-  <text x="174" y="410" font-family="system-ui,-apple-system,sans-serif" font-size="20" font-weight="700" fill="#e6edf3" text-anchor="middle">📚 CS Undergrad</text>
-  <text x="174" y="430" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#636e7b" font-style="italic" text-anchor="middle">pulling all nighters</text>
-  <text x="174" y="456" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#636e7b" text-anchor="middle">Next rank: <tspan fill="#58a6ff">🎓 Stanford Kid</tspan> → 2 more days</text>
+  <rect x="10" y="368" width="328" height="104" rx="8" fill="#141414" stroke="#1e1e1e" stroke-width="1"/>
+  <text x="174" y="400" font-family="system-ui,-apple-system,sans-serif" font-size="20" font-weight="700" fill="#f0f0f0" text-anchor="middle">📚 CS Undergrad</text>
+  <text x="174" y="420" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#555" font-style="italic" text-anchor="middle">pulling all nighters</text>
+  <text x="174" y="446" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#555" text-anchor="middle">Next rank: <tspan fill="#f0f0f0">🎓 Stanford Kid</tspan> → 2 more days</text>
 
   <!-- ── FOOTER ─────────────────────────────────────────────────── -->
-  <text x="22" y="514" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="#636e7b">⚙️ Settings</text>
-  <text x="326" y="514" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#444c56" text-anchor="end">Updated 3m ago</text>
+  <text x="22" y="508" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="#555">⚙️ Settings</text>
+  <text x="326" y="508" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#333" text-anchor="end">Updated 3m ago</text>
 
 </svg>
