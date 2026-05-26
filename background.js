@@ -244,6 +244,24 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     })().catch(() => sendResponse({ ok: false }));
     return true;
   }
+  if (msg.type === 'FETCH_NOW_WITH_COUNT') {
+    // Popup fetched the count directly — just update game state with the known value
+    (async () => {
+      try {
+        const count = (typeof msg.count === 'number' && msg.count >= 0) ? msg.count : null;
+        if (count !== null) {
+          const updated = await updateGameState(count);
+          await updateIcon(count >= updated.daily_target, count);
+        } else {
+          await doFetch();
+        }
+        sendResponse({ ok: true });
+      } catch {
+        sendResponse({ ok: false });
+      }
+    })();
+    return true;
+  }
   if (msg.type === 'RESCHEDULE_NOTIFICATION') {
     scheduleNotificationAlarm()
       .then(() => sendResponse({ ok: true }))

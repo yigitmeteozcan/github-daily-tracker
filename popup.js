@@ -153,6 +153,31 @@ const showSettings = async () => {
 
 // --- Fetch logic ---
 
+// Fetch today's commit count directly from the GitHub Events API.
+// More reliable than service worker HTML parsing — returns an integer or null.
+const fetchTodayCommits = async (username) => {
+  try {
+    const today = todayLocalString();
+    const res = await fetch(
+      `https://api.github.com/users/${encodeURIComponent(username)}/events/public?per_page=100`,
+      { cache: 'no-store', headers: { Accept: 'application/vnd.github.v3+json' } },
+    );
+    if (!res.ok) return null;
+    const events = await res.json();
+    if (!Array.isArray(events)) return null;
+    let count = 0;
+    for (const ev of events) {
+      if (ev.type !== 'PushEvent' || !ev.created_at) continue;
+      const d = new Date(ev.created_at);
+      const evDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (evDate === today) count += ev.payload?.size ?? ev.payload?.commits?.length ?? 0;
+    }
+    return count;
+  } catch {
+    return null;
+  }
+};
+
 let fetching = false;
 
 const fetchAndRender = async () => {
@@ -162,10 +187,31 @@ const fetchAndRender = async () => {
   btn.classList.add('spinning');
   btn.disabled = true;
   try {
-    // Fire-and-forget the message — if the service worker isn't up, cached data stays visible
+    const raw      = await chrome.storage.local.get(null);
+    const username = raw.username;
+    if (!username) { showNoUsername(); return; }
+
+    // Fetch commit count directly in the popup — bypass service-worker HTML parsing
+    const count = await fetchTodayCommits(username);
+
     try {
-      await chrome.runtime.sendMessage({ type: 'FETCH_NOW' });
-    } catch (_) {}
+      if (count !== null) {
+        // Send the real count to the service worker so it can update game state
+        await chrome.runtime.sendMessage({ type: 'FETCH_NOW_WITH_COUNT', count });
+      } else {
+        // Events API unavailable — let the service worker try its own strategies
+        await chrome.runtime.sendMessage({ type: 'FETCH_NOW' });
+      }
+    } catch (_) {
+      // Service worker unreachable — write the count directly so the UI updates
+      if (count !== null) {
+        await chrome.storage.local.set({
+          today_commits: count,
+          last_fetched: new Date().toISOString(),
+        });
+      }
+    }
+
     const fresh = await chrome.storage.local.get(null);
     if (fresh.username) render(normalizeStorageData(fresh));
   } catch (_) {
