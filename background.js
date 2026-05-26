@@ -28,18 +28,37 @@ const fetchContributions = async (username) => {
     const text = await res.text();
 
     const localDate = todayLocalString();
+
+    // Strategy 1: data-count attribute, local date
     let count = parseSvgCount(text, localDate);
 
-    // GitHub may use UTC dates for unauthenticated requests — try UTC as fallback
+    // Strategy 2: data-count attribute, UTC date (GitHub may differ on unauthenticated reqs)
     if (count === null) {
       const utcDate = new Date().toISOString().slice(0, 10);
       if (utcDate !== localDate) count = parseSvgCount(text, utcDate);
     }
 
+    // Strategy 3: aria-label text — "2 contributions on May 26, 2026"
+    // Robust against GitHub HTML structure changes
+    if (count === null) count = parseAriaLabel(text, localDate);
+
     return count ?? 0;
   } finally {
     clearTimeout(timer);
   }
+};
+
+// Parses "N contribution(s) on Month D, YYYY" from GitHub aria-labels
+const parseAriaLabel = (text, dateStr) => {
+  const d = new Date(dateStr + 'T12:00:00');
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const label = `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  const re = new RegExp(`(\\d+)\\s+contribution(?:s)?\\s+on\\s+${label}`, 'i');
+  const match = text.match(re);
+  if (!match) return null;
+  const n = parseInt(match[1], 10);
+  return Number.isFinite(n) && n >= 0 && n <= 10000 ? n : null;
 };
 
 const updateGameState = async (todayCommits) => {

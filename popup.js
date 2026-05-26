@@ -192,8 +192,9 @@ const loadAndRender = async () => {
     showMain();
     render(data);
 
-    // Auto-refresh if no data, >30 min old, or from a previous day
-    if (isStale(raw.last_fetched)) fetchAndRender();
+    // Always fetch fresh data when the popup opens — cached data shown instantly above,
+    // then updated once the background fetch completes
+    fetchAndRender();
   } catch (_) {
     showError(STRINGS.loadFailed);
   }
@@ -203,6 +204,16 @@ const loadAndRender = async () => {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadAndRender();
+
+  // Live update: re-render whenever the background writes new commit/streak data
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (!('today_commits' in changes || 'streak' in changes || 'aura' in changes)) return;
+    if (document.getElementById('main-content').classList.contains('hidden')) return;
+    chrome.storage.local.get(null).then((raw) => {
+      if (raw.username) render(normalizeStorageData(raw));
+    }).catch(() => {});
+  });
 
   document.getElementById('refresh-btn').addEventListener('click', fetchAndRender);
 
