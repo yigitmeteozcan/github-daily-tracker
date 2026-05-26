@@ -8,7 +8,7 @@ A Chrome extension that turns your GitHub commit habit into a game — streak tr
 
 ## Screenshot
 
-![GitHub Daily Tracker popup](https://placeholder.com/screenshot.png)
+![GitHub Daily Tracker popup](screenshots/popup-preview.svg)
 
 ---
 
