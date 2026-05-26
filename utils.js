@@ -84,35 +84,43 @@ export const parseSvgCount = (text, dateStr) => {
   return count;
 };
 
-// Full contribution-count parser — handles all known GitHub tooltip formats:
-//   "3 contributions on May 24th"      (current format, no year)
-//   "3 contributions on May 24, 2024"  (older format, with year)
-//   "1 contribution on May 24th"
-//   "No contributions on May 24th"
-// Falls back to data-count attribute parsing first.
+// Parses today's contribution count from GitHub's contributions page HTML.
+//
+// GitHub embeds a full year of data, so the same "May 26th" appears TWICE
+// (2025-05-26 and 2026-05-26). A plain ordinal-date search matches the wrong year.
+// The correct approach: find the <td data-date="YYYY-MM-DD" id="..."> cell,
+// then look up the matching <tool-tip for="..."> to read the exact count.
+//
+// Tooltip formats observed in the wild:
+//   "16 contributions on May 26th."
+//   "1 contribution on May 26th."
+//   "No contributions on May 26th."
 export const parseContributionCount = (text, dateStr) => {
   if (!text || typeof text !== 'string') return null;
 
-  // Try data-count attribute first
+  // Legacy: data-count attribute (GitHub used this before ~2023)
   const fromAttr = parseSvgCount(text, dateStr);
   if (fromAttr !== null) return fromAttr;
 
-  const d = new Date(dateStr + 'T12:00:00');
-  if (isNaN(d.getTime())) return null;
-  const dayNum    = d.getDate();
-  const monthName = MONTH_NAMES[d.getMonth()];
-  const ordinal   = `${monthName} ${dayNum}${ordinalSuffix(dayNum)}`;   // "May 24th"
-  const withYear  = `${monthName} ${dayNum}, ${d.getFullYear()}`;       // "May 24, 2024"
-  const datePattern = `(?:${ordinal}|${withYear})`;
-
-  // "No contributions on May 24th" → 0
-  if (new RegExp(`No\\s+contributions\\s+on\\s+${datePattern}`, 'i').test(text)) return 0;
-
-  // "N contribution(s) on May 24th"
-  const m = text.match(new RegExp(`(\\d+)\\s+contribution(?:s)?\\s+on\\s+${datePattern}`, 'i'));
-  if (m) {
-    const n = parseInt(m[1], 10);
-    if (Number.isFinite(n) && n >= 0 && n <= MAX_TODAY_COMMITS) return n;
+  // Primary: anchor to the exact data-date on the <td> cell, read its tooltip
+  const cellRe = new RegExp(
+    `id="(contribution-day-component[^"]*)"[^>]*data-date="${dateStr}"` +
+    `|data-date="${dateStr}"[^>]*id="(contribution-day-component[^"]*)"`,
+    'i',
+  );
+  const cellMatch = text.match(cellRe);
+  if (cellMatch) {
+    const cellId = cellMatch[1] || cellMatch[2];
+    const tipMatch = text.match(new RegExp(`for="${cellId}"[^>]*>([^<]+)<\\/tool-tip>`, 'i'));
+    if (tipMatch) {
+      const tip = tipMatch[1].trim();
+      if (/^No\s+contributions/i.test(tip)) return 0;
+      const m = tip.match(/^(\d+)\s+contribution/i);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (Number.isFinite(n) && n >= 0 && n <= MAX_TODAY_COMMITS) return n;
+      }
+    }
   }
 
   return null;
