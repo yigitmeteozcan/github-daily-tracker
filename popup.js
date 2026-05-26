@@ -1,5 +1,5 @@
 import {
-  getRank, getNextRank, normalizeStorageData, validateUsername,
+  getRank, getNextRank, normalizeStorageData, validateUsername, computeGameState,
   CRACKED_THRESHOLD, AURA_BAR_MAX, STRINGS, todayLocalString, parseSvgCount,
 } from './utils.js';
 
@@ -239,29 +239,22 @@ const fetchAndRender = async () => {
     const username = raw.username;
     if (!username) { showNoUsername(); return; }
 
-    // Fetch commit count directly in the popup — bypass service-worker HTML parsing
     const count = await fetchTodayCommits(username);
 
-    try {
-      if (count !== null) {
-        // Send the real count to the service worker so it can update game state
-        await chrome.runtime.sendMessage({ type: 'FETCH_NOW_WITH_COUNT', count });
-      } else {
-        // Events API unavailable — let the service worker try its own strategies
-        await chrome.runtime.sendMessage({ type: 'FETCH_NOW' });
-      }
-    } catch (_) {
-      // Service worker unreachable — write the count directly so the UI updates
-      if (count !== null) {
-        await chrome.storage.local.set({
-          today_commits: count,
-          last_fetched: new Date().toISOString(),
-        });
-      }
+    if (count !== null) {
+      // Compute and write game state directly in the popup — no service worker involved
+      const data   = normalizeStorageData(raw);
+      const update = computeGameState(data, count);
+      await chrome.storage.local.set(update);
+      render(normalizeStorageData({ ...raw, ...update }));
+      // Tell SW to refresh badge/icon in the background (fire-and-forget)
+      try { chrome.runtime.sendMessage({ type: 'FETCH_NOW_WITH_COUNT', count }); } catch (_) {}
+    } else {
+      // All fetch strategies failed — let the service worker try its own approaches
+      try { await chrome.runtime.sendMessage({ type: 'FETCH_NOW' }); } catch (_) {}
+      const fresh = await chrome.storage.local.get(null);
+      if (fresh.username) render(normalizeStorageData(fresh));
     }
-
-    const fresh = await chrome.storage.local.get(null);
-    if (fresh.username) render(normalizeStorageData(fresh));
   } catch (_) {
     showError(STRINGS.refreshFailed);
   } finally {
@@ -371,16 +364,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('test-notif-btn').addEventListener('click', async () => {
-    const raw      = await chrome.storage.local.get(['today_commits', 'daily_target']);
-    const data     = normalizeStorageData(raw);
-    const remaining = Math.max(0, data.daily_target - data.today_commits);
-    chrome.notifications.create('test-notification', {
-      type:    'basic',
-      iconUrl: 'icons/icon-red-48.png',
-      title:   '⚠️ Streak at risk!',
-      message: remaining > 0
-        ? `You have ${data.today_commits} commit${data.today_commits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`
-        : "You've already hit your target today! Keep it up. 🟢",
-    });
+    try {
+      await chrome.runtime.sendMessage({ type: 'TEST_NOTIFICATION' });
+    } catch (_) {}
   });
 });

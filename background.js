@@ -268,6 +268,25 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       .catch(() => sendResponse({ ok: false }));
     return true;
   }
+  if (msg.type === 'TEST_NOTIFICATION') {
+    (async () => {
+      try {
+        const raw  = await getStorage();
+        const data = normalizeStorageData(raw);
+        const remaining = Math.max(0, data.daily_target - data.today_commits);
+        chrome.notifications.create('test-notification', {
+          type:    'basic',
+          iconUrl: 'icons/icon-red-48.png',
+          title:   '⚠️ Streak at risk!',
+          message: remaining > 0
+            ? `You have ${data.today_commits} commit${data.today_commits !== 1 ? 's' : ''}. Need ${remaining} more to stay alive. Don't let your aura fade. 🔴`
+            : "You've already hit your target today! Keep it up. 🟢",
+        });
+        sendResponse({ ok: true });
+      } catch { sendResponse({ ok: false }); }
+    })();
+    return true;
+  }
 });
 
 chrome.runtime.onInstalled.addListener(async () => {
