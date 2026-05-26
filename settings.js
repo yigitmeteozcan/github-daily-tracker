@@ -80,9 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    try {
-      await chrome.runtime.sendMessage({ type: 'RESCHEDULE_NOTIFICATION' });
-    } catch (_) {}
+    try { await chrome.runtime.sendMessage({ type: 'RESCHEDULE_NOTIFICATION' }); } catch (_) {}
+    // Fetch immediately so today's count shows up the moment they open the popup
+    try { await chrome.runtime.sendMessage({ type: 'FETCH_NOW' }); } catch (_) {}
 
     showSaved(usernameChanged ? STRINGS.usernameChanged : '✓ Saved!');
     await loadSettings();

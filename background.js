@@ -83,17 +83,16 @@ const doDailyReset = async () => {
     const data      = normalizeStorageData(raw);
     const yesterday = yesterdayLocalString();
 
-    // Already accounted for yesterday
-    if (data.last_active_date === yesterday) return;
-
     const yesterdayCommits = data.history[yesterday] ?? 0;
     const targetHit        = yesterdayCommits >= data.daily_target;
 
+    // Always reset today_commits to 0 for the new day.
+    // Apply streak penalty only if yesterday was missed and streak was alive.
     if (!targetHit && data.streak > 0) {
       await setStorage({
-        streak:      0,
-        cracked_bar: data.cracked_achieved ? CRACKED_THRESHOLD : 0,
-        aura:        Math.max(0, data.aura - AURA_BREAK_PENALTY),
+        streak:        0,
+        cracked_bar:   data.cracked_achieved ? CRACKED_THRESHOLD : 0,
+        aura:          Math.max(0, data.aura - AURA_BREAK_PENALTY),
         today_commits: 0,
       });
     } else {

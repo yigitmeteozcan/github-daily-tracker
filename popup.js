@@ -1,7 +1,9 @@
 import {
   getRank, getNextRank, normalizeStorageData,
-  CRACKED_THRESHOLD, AURA_BAR_MAX, STRINGS,
+  CRACKED_THRESHOLD, AURA_BAR_MAX, STRINGS, todayLocalString,
 } from './utils.js';
+
+const STALE_MS = 30 * 60 * 1000; // auto-fetch if data is older than 30 min
 
 const formatNumber = (n) => Math.round(n).toLocaleString();
 
@@ -17,6 +19,17 @@ const formatTime = (iso) => {
   const diffH = Math.floor(diffMin / 60);
   if (diffH < 24)   return `${diffH}h ago`;
   return d.toLocaleDateString();
+};
+
+const isStale = (lastFetched) => {
+  if (!lastFetched) return true;
+  return (Date.now() - new Date(lastFetched).getTime()) > STALE_MS;
+};
+
+// Returns YYYY-MM-DD of any ISO timestamp in local time
+const localDateOf = (iso) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 const setBar = (id, pct, modifier) => {
@@ -35,7 +48,6 @@ const render = (raw) => {
     aura, cracked_bar, cracked_achieved, today_commits, last_fetched,
   } = data;
 
-  // textContent only — never innerHTML for user-derived values
   document.getElementById('username-display').textContent = username ? `@${username}` : '';
 
   const commitsPct = daily_target > 0 ? (today_commits / daily_target) * 100 : 0;
@@ -61,14 +73,13 @@ const render = (raw) => {
     achievementEl.classList.add('hidden');
   }
 
-  const rank         = getRank(streak);
-  const nextRank     = getNextRank(streak);
-  const rankNextEl   = document.getElementById('rank-next');
+  const rank     = getRank(streak);
+  const nextRank = getNextRank(streak);
+  const rankNextEl = document.getElementById('rank-next');
 
   document.getElementById('rank-display').textContent = `${rank.emoji} ${rank.name}`;
   document.getElementById('rank-tagline').textContent = rank.tagline;
 
-  // Build rank-next with DOM nodes — no innerHTML
   rankNextEl.textContent = '';
   if (nextRank) {
     const streakNeeded = nextRank.min - streak;
@@ -106,37 +117,60 @@ const showMain = () => {
   document.getElementById('main-content').classList.remove('hidden');
 };
 
-const loadAndRender = async () => {
-  try {
-    const data = await chrome.storage.local.get(null);
-    if (!data.username) { showNoUsername(); return; }
-    showMain();
-    render(data);
-  } catch (_) {
-    showError(STRINGS.loadFailed);
-  }
-};
+// Prevent concurrent fetches (e.g. auto-fetch + manual refresh at same time)
+let fetching = false;
 
-const triggerRefresh = async () => {
+const fetchAndRender = async () => {
+  if (fetching) return;
+  fetching = true;
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
   btn.disabled = true;
   try {
     await chrome.runtime.sendMessage({ type: 'FETCH_NOW' });
-    await loadAndRender();
+    const fresh = await chrome.storage.local.get(null);
+    if (fresh.username) render(normalizeStorageData(fresh));
   } catch (_) {
     showError(STRINGS.refreshFailed);
   } finally {
     btn.classList.remove('spinning');
     btn.disabled = false;
+    fetching = false;
   }
 };
 
-const openSettings = () => chrome.runtime.openOptionsPage();
+const loadAndRender = async () => {
+  try {
+    const raw = await chrome.storage.local.get(null);
+    if (!raw.username) { showNoUsername(); return; }
+
+    const data = normalizeStorageData(raw);
+
+    // If last_fetched is from a prior day, show 0 for today's commits until
+    // the fresh fetch arrives — avoids briefly displaying yesterday's count
+    if (raw.last_fetched && localDateOf(raw.last_fetched) !== todayLocalString()) {
+      data.today_commits = 0;
+    }
+
+    showMain();
+    render(data);
+
+    // Auto-refresh if cached data is stale (older than 30 min or from a prior day)
+    if (isStale(raw.last_fetched)) fetchAndRender();
+  } catch (_) {
+    showError(STRINGS.loadFailed);
+  }
+};
+
+// Opens settings in a new tab — chrome.tabs.create works without the tabs
+// permission when the URL is a chrome-extension:// URL
+const openSettings = () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   loadAndRender();
-  document.getElementById('refresh-btn').addEventListener('click', triggerRefresh);
+  document.getElementById('refresh-btn').addEventListener('click', fetchAndRender);
   document.getElementById('settings-link').addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
   document.getElementById('settings-link-inline').addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
 });
